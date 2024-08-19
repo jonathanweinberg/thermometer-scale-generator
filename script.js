@@ -1,28 +1,38 @@
-const heightInput = document.getElementById('thermometerHeight');
-const widthInput = document.getElementById('thermometerWidth');
+const overallHeightInput = document.getElementById('overallHeight');
+const overallWidthInput = document.getElementById('overallWidth');
 const tempRangeInput = document.getElementById('tempRange');
+const tempStepInput = document.getElementById('tempStep');
+const thermometerHeightInput = document.getElementById('thermometerHeight');
+const thermometerWidthInput = document.getElementById('thermometerWidth');
 const scalePreview = document.getElementById('scalePreview');
 const downloadBtn = document.getElementById('downloadBtn');
 
 function generateScale() {
-    const height = parseFloat(heightInput.value);
-    const width = parseFloat(widthInput.value);
+    const overallHeight = parseFloat(overallHeightInput.value);
+    const overallWidth = parseFloat(overallWidthInput.value);
     const tempRange = tempRangeInput.value.split(',').map(Number);
+    const tempStep = parseFloat(tempStepInput.value);
     const [minTemp, maxTemp] = tempRange;
 
+    const thermometerHeight = parseFloat(thermometerHeightInput.value);
+    const thermometerWidth = parseFloat(thermometerWidthInput.value);
+
     const totalTempRange = maxTemp - minTemp;
-    const tempStepPerMM = totalTempRange / height; // Degrees per mm
+    const tempStepPerMM = totalTempRange / overallHeight; // Degrees per mm
 
-    let scaleSVG = `<svg width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`;
+    const leftPadding = (overallWidth - thermometerWidth) / 2;
 
-    // Mark temperatures at every 10°F interval
-    for (let i = 0; i <= totalTempRange; i += 10) {
-        const position = i / tempStepPerMM; // Position in mm based on temperature
-        const tempValue = maxTemp - i; // Fahrenheit value for this position
-        if (position <= height) {
+    let scaleSVG = `<svg width="${overallWidth}mm" height="${overallHeight}mm" viewBox="0 0 ${overallWidth} ${overallHeight}" xmlns="http://www.w3.org/2000/svg">`;
+
+    // Mark temperatures at specified interval
+    for (let temp = minTemp; temp <= maxTemp; temp += tempStep) {
+        const position = (maxTemp - temp) / tempStepPerMM; // Position in mm based on temperature
+
+        // Ensure text and line fit within the boundaries
+        if (position >= 0 && position <= overallHeight) {
             scaleSVG += `
-                <line x1="0" y1="${position}" x2="${width / 2}" y2="${position}" stroke="black" stroke-width="0.5"/>
-                <text x="${width / 2 + 1}" y="${position + 2}" font-size="2" fill="black">${tempValue}°F</text>
+                <line x1="${leftPadding - 2}" y1="${position}" x2="${leftPadding}" y2="${position}" stroke="black" stroke-width="0.5"/>
+                <text x="${leftPadding - 4}" y="${position + 2}" font-size="3" fill="black" text-anchor="end">${temp}°F</text>
             `;
         }
     }
@@ -42,9 +52,12 @@ function downloadSVG() {
     URL.revokeObjectURL(url);
 }
 
-heightInput.addEventListener('input', generateScale);
-widthInput.addEventListener('input', generateScale);
+overallHeightInput.addEventListener('input', generateScale);
+overallWidthInput.addEventListener('input', generateScale);
 tempRangeInput.addEventListener('input', generateScale);
+tempStepInput.addEventListener('input', generateScale);
+thermometerHeightInput.addEventListener('input', generateScale);
+thermometerWidthInput.addEventListener('input', generateScale);
 downloadBtn.addEventListener('click', downloadSVG);
 
 // Initial render
